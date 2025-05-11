@@ -1,0 +1,34 @@
+<h2 mat-dialog-title>Добавить задачу</h2>
+<mat-dialog-content>
+  <p></p>
+  <mat-form-field>
+    <mat-label>Заголовок</mat-label>
+    <input
+      aria-label="Заголовок"
+      matInput
+      [formControl]="title"
+      cdkFocusInitial
+    />
+    <mat-error *ngIf="title.hasError('required')">Укажите заголовок</mat-error>
+    <mat-error *ngIf="title.hasError('maxlength')">Макс. 30 символов</mat-error>
+    <mat-error *ngIf="title.hasError('minlength')">Мин. 3 символа</mat-error>
+  </mat-form-field>
+  <mat-form-field>
+    <mat-label>Описание</mat-label>
+    <input
+      aria-label="Описание"
+      matInput
+      [formControl]="description"
+      cdkFocusInitial
+    />
+    <mat-error *ngIf="description.hasError('maxlength')"
+      >Макс. 30 символов</mat-error
+    >
+  </mat-form-field>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-button (click)="onCancelClick()">Отмена</button>
+  <button mat-button (click)="onDialogClick()" [disabled]="title.invalid">
+    Готово
+  </button>
+</mat-dialog-actions>

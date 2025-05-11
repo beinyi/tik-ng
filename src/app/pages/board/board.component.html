@@ -1,0 +1,81 @@
+<div class="board">
+  <nav>
+    <div class="board__toolbar">
+      <mat-form-field>
+        <mat-label>Доска</mat-label>
+        <mat-select
+          placeholder="Выберите доску"
+          name="board"
+          [formControl]="selectedBoardId"
+        >
+          @if ((boards$ | async)?.length) {
+          <mat-option
+            *ngFor="let board of (boards$ | async) ?? []"
+            [value]="board.id"
+          >
+            {{ board?.title }}
+          </mat-option>
+          } @else {
+          <mat-option disabled>Нет доступных</mat-option>
+          }
+          <mat-option (click)="openBoadrDialog()">Добавить</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Новая колонка</mat-label>
+        <input
+          aria-label="Новая колонка"
+          matInput
+          [formControl]="newColumnName"
+          cdkFocusInitial
+        />
+        <mat-error *ngIf="newColumnName.hasError('maxlength')"
+          >Макс. 30 символов</mat-error
+        >
+        <mat-error *ngIf="newColumnName.hasError('minlength')"
+          >Мин. 3 символа</mat-error
+        >
+        <button
+          matSuffix
+          mat-icon-button
+          (click)="addColumn()"
+          title="Добавить колонку"
+          [disabled]="newColumnName.invalid"
+        >
+          <mat-icon>add</mat-icon>
+        </button>
+      </mat-form-field>
+    </div>
+    <button mat-button (click)="onChangeTheme()">Тема</button>
+  </nav>
+
+  <div
+    class="board__columns"
+    dragScroll
+    cdkDropListGroup
+    cdkDropList
+    cdkDropListOrientation="horizontal"
+    [cdkDropListData]="columnIds()"
+    (cdkDropListDropped)="dropColumn($event)"
+  >
+    <app-column
+      cdkDrag
+      class="column_item"
+      *ngFor="let column of columns$ | async"
+      [column]="column"
+      (onOpenTaskDialog)="openTaskDialog(column.id)"
+    ></app-column>
+  </div>
+</div>
+
+<!-- <div>
+    @for (col of columns$ | async; track $index) {
+    <button mat-icon-button (click)="addTask(col.id)">Добавить задачу</button>
+    <mat-list>
+      @for (task of (tasksByColumn$ | async)[c]; track $index) {
+      <mat-list-item>item</mat-list-item>
+      }
+    </mat-list>
+    }
+  </div> -->

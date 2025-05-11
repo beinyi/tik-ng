@@ -1,0 +1,22 @@
+<h2 mat-dialog-title>Создать доску</h2>
+<mat-dialog-content>
+  <p>Задайте название для новой доски...</p>
+  <mat-form-field>
+    <mat-label>Название</mat-label>
+    <input
+      matInput
+      [formControl]="name"
+      cdkFocusInitial
+      aria-label="board name"
+    />
+    <mat-error *ngIf="name.hasError('required')">Укажите название</mat-error>
+    <mat-error *ngIf="name.hasError('maxlength')">Макс. 30 символов</mat-error>
+    <mat-error *ngIf="name.hasError('minlength')">Мин. 3 символа</mat-error>
+  </mat-form-field>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-button (click)="onCancelClick()">Отмена</button>
+  <button mat-button (click)="onDialogClick()" [disabled]="name.invalid">
+    Готово
+  </button>
+</mat-dialog-actions>

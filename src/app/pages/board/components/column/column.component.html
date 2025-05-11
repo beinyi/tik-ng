@@ -1,0 +1,40 @@
+<div class="column__header" cdkDragHandle>
+  <h3>{{ column.title }}</h3>
+  <button
+    mat-icon-button
+    (click)="onOpenTaskDialog.emit(column.id)"
+    matTooltip="Добавить задачу"
+  >
+    <mat-icon>add</mat-icon>
+  </button>
+  <button mat-icon-button (click)="clickDelete()" matTooltip="Удалить колонку">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+<div
+  [id]="column.id"
+  cdkDropList
+  [cdkDropListData]="taskIds()"
+  (cdkDropListDropped)="dropTask($event)"
+  class="task-list"
+  [class.task-list--no-items]="!hasTasks()"
+>
+  <ng-container *ngIf="hasTasks(); else noTasksBlock">
+    <app-task
+      class="task-list__task"
+      cdkDrag
+      *ngFor="let task of tasks$ | async"
+      [task]="task"
+      [columnId]="column.id"
+    ></app-task>
+  </ng-container>
+</div>
+
+<ng-template #noTasksBlock>
+  <div class="no-tasks">
+    <span>Здесь нет задач, но можно их добавить...</span>
+    <button mat-mini-fab (click)="onOpenTaskDialog.emit(column.id)">
+      <mat-icon>add</mat-icon>
+    </button>
+  </div>
+</ng-template>

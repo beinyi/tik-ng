@@ -1,0 +1,15 @@
+.task {
+  -webkit-user-select: none;
+  user-select: none;
+  &__title {
+    font: var(--mat-sys-title-medium);
+    &--done {
+      text-decoration-line: line-through;
+      color: var(--mat-sys-outline);
+    }
+  }
+  &__description {
+    color: var(--mat-sys-outline);
+    font: var(--mat-sys-body-medium);
+  }
+}
