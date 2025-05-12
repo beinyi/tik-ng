@@ -10,7 +10,7 @@ import { MatStepperModule } from '@angular/material/stepper';
 import { MatButtonModule } from '@angular/material/button';
 import { Task } from '../../../../models/index.model';
 import { MatIcon } from '@angular/material/icon';
-import { BoardService } from '../../../../core/services/board/board.service';
+import { TaskService } from '../../../../core/services/board/task.service';
 
 @Component({
   selector: 'app-task',
@@ -31,17 +31,17 @@ export class TaskComponent {
   @Input() task!: Task;
   @Input() columnId!: string;
 
-  #boardService = inject(BoardService);
+  #taskService = inject(TaskService);
 
   get isDone(): boolean {
     return this.task.status === 'done';
   }
 
   clickToggleStatus() {
-    this.#boardService.toggleTaskStatus(this.task.id);
+    this.#taskService.toggleTaskStatus(this.task.id);
   }
 
   clickDelete() {
-    this.#boardService.deleteTask(this.task.id, this.columnId);
+    this.#taskService.deleteTask(this.task.id, this.columnId);
   }
 }

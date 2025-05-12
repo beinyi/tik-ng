@@ -218,3 +218,5 @@ export const initialState: BoardState = {
     },
   },
 };
+
+export const demoBoardId = Object.entries(initialState.boards)[0][0];
