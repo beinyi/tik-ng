@@ -5,7 +5,6 @@ import {
   inject,
   Input,
   OnChanges,
-  OnInit,
   Output,
   Signal,
   SimpleChanges,
@@ -24,6 +23,7 @@ import {
 } from '@angular/cdk/drag-drop';
 import { MatIcon } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { ColumnService } from '../../../../core/services/board/column.service';
 
 @Component({
   selector: 'app-column',
@@ -44,7 +44,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 export class ColumnComponent implements OnChanges {
   @Input({ required: true }) column!: Column;
   @Output() onOpenTaskDialog = new EventEmitter<string>();
-  #boardService = inject(BoardService);
+  #columnService = inject(ColumnService);
 
   tasks$!: Observable<Task[]>;
   taskIds!: Signal<string[]>;
@@ -52,31 +52,23 @@ export class ColumnComponent implements OnChanges {
   readonly hasTasks = computed(() => this.taskIds().length > 0);
 
   dropTask(event: CdkDragDrop<string[]>) {
-    if (event.previousContainer.id === event.container.id) {
-      this.#boardService.moveTask(
-        event.container.id,
-        event.previousIndex,
-        event.currentIndex
-      );
-    } else {
-      this.#boardService.transferTask(
-        event.previousContainer.id,
-        event.container.id,
-        event.previousIndex,
-        event.currentIndex
-      );
-    }
+    this.#columnService.transferTask(
+      event.previousContainer.id,
+      event.container.id,
+      event.previousIndex,
+      event.currentIndex
+    );
   }
 
   clickDelete() {
-    this.#boardService.deleteColumn(this.column.id);
+    this.#columnService.deleteColumn(this.column.id);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['column']?.currentValue) {
       const col = changes['column'].currentValue as Column;
-      this.tasks$ = this.#boardService.getTasksForColumn$(col.id);
-      this.taskIds = this.#boardService.getTasksIdForColumn(col.id);
+      this.tasks$ = this.#columnService.getTasksForColumn$(col.id);
+      this.taskIds = this.#columnService.getTasksIdForColumn(col.id);
     }
   }
 }

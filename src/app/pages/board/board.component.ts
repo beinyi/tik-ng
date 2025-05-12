@@ -31,6 +31,8 @@ import {
   CdkDropListGroup,
 } from '@angular/cdk/drag-drop';
 import { DragScrollDirective } from '../../core/shared/directives/drag-scroll.directive';
+import { ColumnService } from '../../core/services/board/column.service';
+import { TaskService } from '../../core/services/board/task.service';
 
 @Component({
   selector: 'app-board',
@@ -58,13 +60,15 @@ import { DragScrollDirective } from '../../core/shared/directives/drag-scroll.di
 })
 export class BoardComponent {
   #boardService = inject(BoardService);
+  #columnService = inject(ColumnService);
+  #taskService = inject(TaskService);
   #themeSignal = createThemeSignal();
 
   isDarkTheme = this.#themeSignal.isDarkTheme;
 
   board$ = this.#boardService.selectedBoard$;
   boards$ = this.#boardService.boards$;
-  columns$ = this.#boardService.columns$;
+  columns$ = this.#columnService.columns$;
 
   readonly columnIds = this.#boardService.columnIds;
   selectedBoardId = new FormControl();
@@ -75,24 +79,6 @@ export class BoardComponent {
     Validators.minLength(3),
     Validators.maxLength(30),
   ]);
-
-  // drop(event: CdkDragDrop<Task[]>, task: Task) {
-  //   this.#boardService.moveTask(task.id);
-  //   if (event.previousContainer === event.container) {
-  //     moveItemInArray(
-  //       event.container.data,
-  //       event.previousIndex,
-  //       event.currentIndex
-  //     );
-  //   } else {
-  //     transferArrayItem(
-  //       event.previousContainer.data,
-  //       event.container.data,
-  //       event.previousIndex,
-  //       event.currentIndex
-  //     );
-  //   }
-  // }
 
   dropColumn(event: CdkDragDrop<string[]>) {
     this.#boardService.moveColumn(
@@ -117,14 +103,14 @@ export class BoardComponent {
 
     dialogRef.afterClosed().subscribe((result: Omit<Task, 'id'>) => {
       if (result !== undefined) {
-        this.#boardService.addTask(columnId, result);
+        this.#taskService.createTask(columnId, result);
       }
     });
   }
 
   addColumn() {
     if (this.newColumnName.valid) {
-      this.#boardService.addColumn(this.newColumnName.value!);
+      this.#columnService.createColumn(this.newColumnName.value!);
       this.newColumnName.setValue('');
       this.newColumnName.setErrors(null);
     }
