@@ -70,7 +70,7 @@ export class BoardComponent {
   boards$ = this.#boardService.boards$;
   columns$ = this.#columnService.columns$;
 
-  readonly columnIds = this.#boardService.columnIds;
+  columnIds$ = this.#boardService.columnIds$;
   selectedBoardId = new FormControl();
 
   readonly dialog = inject(MatDialog);

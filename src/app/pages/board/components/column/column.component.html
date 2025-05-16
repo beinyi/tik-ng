@@ -14,27 +14,24 @@
 <div
   [id]="column.id"
   cdkDropList
-  [cdkDropListData]="taskIds()"
+  [cdkDropListData]="(taskIds$ | async)!"
   (cdkDropListDropped)="dropTask($event)"
   class="task-list"
-  [class.task-list--no-items]="!hasTasks()"
+  [class.task-list--no-items]="!(hasTasks$ | async)"
 >
-  <ng-container *ngIf="hasTasks(); else noTasksBlock">
+    @for (task of tasks$ | async; track task.id) {
     <app-task
       class="task-list__task"
       cdkDrag
-      *ngFor="let task of tasks$ | async"
       [task]="task"
       [columnId]="column.id"
     ></app-task>
-  </ng-container>
-</div>
-
-<ng-template #noTasksBlock>
+  } @empty {
   <div class="no-tasks">
     <span>Здесь нет задач, но можно их добавить...</span>
     <button mat-mini-fab (click)="onOpenTaskDialog.emit(column.id)">
       <mat-icon>add</mat-icon>
     </button>
   </div>
-</ng-template>
+  }
+</div>

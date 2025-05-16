@@ -8,14 +8,11 @@
           name="board"
           [formControl]="selectedBoardId"
         >
-          @if ((boards$ | async)?.length) {
-          <mat-option
-            *ngFor="let board of (boards$ | async) ?? []"
-            [value]="board.id"
-          >
+          @for (board of (boards$ | async); track board.id) {
+          <mat-option [value]="board.id">
             {{ board?.title }}
           </mat-option>
-          } @else {
+          } @empty {
           <mat-option disabled>Нет доступных</mat-option>
           }
           <mat-option (click)="openBoadrDialog()">Добавить</mat-option>
@@ -56,16 +53,12 @@
     cdkDropListGroup
     cdkDropList
     cdkDropListOrientation="horizontal"
-    [cdkDropListData]="columnIds()"
+    [cdkDropListData]="(columnIds$ | async)!"
     (cdkDropListDropped)="dropColumn($event)"
   >
-    <app-column
-      cdkDrag
-      class="column_item"
-      *ngFor="let column of columns$ | async"
-      [column]="column"
-      (onOpenTaskDialog)="openTaskDialog(column.id)"
-    ></app-column>
+    @for (column of columns$ | async; track column.id) {
+    <app-column cdkDrag class="column_item" [column]="column"></app-column>
+    }
   </div>
 </div>
 

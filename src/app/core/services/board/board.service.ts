@@ -1,4 +1,4 @@
-import { computed, inject, Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { Board } from '../../../models/index.model';
 import { BehaviorSubject, map } from 'rxjs';
 import { demoBoardId } from './state.mock';
@@ -21,6 +21,10 @@ export class BoardService {
     map((id) => (id ? this.#stateService.currentState.boards[id] : null))
   );
 
+  readonly columnIds$ = this.#state.pipe(
+    map((state) => state.boards[this.selectedBoardId]?.columnIds ?? [])
+  );
+
   get selectedBoardId() {
     return this.#selectedBord.value;
   }
@@ -29,13 +33,6 @@ export class BoardService {
     const { boards } = this.#stateService.currentState;
     return boards[this.selectedBoardId];
   }
-
-  readonly columnIds = computed(() => {
-    const boardId = this.selectedBoardId;
-    if (!boardId) return [];
-    const { boards } = this.#stateService.currentState;
-    return boards[boardId]?.columnIds ?? [];
-  });
 
   selectBoard(id: string) {
     this.#selectedBord.next(id);

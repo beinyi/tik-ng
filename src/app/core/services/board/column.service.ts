@@ -1,8 +1,8 @@
-import { computed, inject, Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { StateService } from './state.service';
 import { BoardService } from './board.service';
 import { combineLatestWith, map } from 'rxjs';
-import { Column } from '../../../models/index.model';
+import { Column } from '@models/index.model';
 import { moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 
 @Injectable({
@@ -28,14 +28,11 @@ export class ColumnService {
     })
   );
 
-  readonly getTasksIdForColumn = (columnId: string) =>
-    computed(() => {
-      if (!columnId) return [];
-      const {
-        currentState: { columns },
-      } = this.#stateService;
-      return columns[columnId]?.taskIds ?? [];
-    });
+  public getTasksIdForColumn$(columnId: string) {
+    return this.#state.pipe(
+      map((state) => state.columns[columnId]?.taskIds ?? [])
+    );
+  }
 
   public getTasksForColumn$(columnId: string) {
     return this.#state.pipe(

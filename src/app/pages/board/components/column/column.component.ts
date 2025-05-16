@@ -4,14 +4,9 @@ import {
   EventEmitter,
   inject,
   Input,
-  OnChanges,
-  Output,
-  Signal,
-  SimpleChanges,
 } from '@angular/core';
-import { Column, Task } from '../../../../models/index.model';
-import { BoardService } from '../../../../core/services/board/board.service';
-import { Observable } from 'rxjs';
+import { Column, Task } from '@models/index.model';
+import { map, Observable, Subject, takeUntil } from 'rxjs';
 import { AsyncPipe, CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { TaskComponent } from '../task/task.component';
@@ -23,7 +18,7 @@ import {
 } from '@angular/cdk/drag-drop';
 import { MatIcon } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { ColumnService } from '../../../../core/services/board/column.service';
+import { ColumnService } from '@services/board/column.service';
 
 @Component({
   selector: 'app-column',
@@ -47,9 +42,8 @@ export class ColumnComponent implements OnChanges {
   #columnService = inject(ColumnService);
 
   tasks$!: Observable<Task[]>;
-  taskIds!: Signal<string[]>;
-
-  readonly hasTasks = computed(() => this.taskIds().length > 0);
+  taskIds$!: Observable<string[]>;
+  hasTasks$!: Observable<boolean>;
 
   dropTask(event: CdkDragDrop<string[]>) {
     this.#columnService.transferTask(
@@ -64,11 +58,10 @@ export class ColumnComponent implements OnChanges {
     this.#columnService.deleteColumn(this.column.id);
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['column']?.currentValue) {
-      const col = changes['column'].currentValue as Column;
-      this.tasks$ = this.#columnService.getTasksForColumn$(col.id);
-      this.taskIds = this.#columnService.getTasksIdForColumn(col.id);
-    }
+  ngOnInit() {
+    this.tasks$ = this.#columnService.getTasksForColumn$(this.column.id);
+    this.taskIds$ = this.#columnService.getTasksIdForColumn$(this.column.id);
+    this.hasTasks$ = this.taskIds$.pipe(map((ids) => ids.length > 0));
+  }
   }
 }
