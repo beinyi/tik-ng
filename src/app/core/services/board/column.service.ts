@@ -4,6 +4,7 @@ import { BoardService } from './board.service';
 import { combineLatestWith, map } from 'rxjs';
 import { Column } from '@models/index.model';
 import { moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
+import { EditService } from './common/edit.service';
 
 @Injectable({
   providedIn: 'root',
@@ -11,6 +12,7 @@ import { moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 export class ColumnService {
   #stateService = inject(StateService);
   #boardService = inject(BoardService);
+  #editService = inject(EditService);
 
   selectedBoard$ = this.#boardService.selectedBoard$;
 
@@ -63,6 +65,7 @@ export class ColumnService {
 
     this.#updateColumn(newColumn);
     this.#boardService.addColumnToBoard(id);
+    this.#editService.setEditing(id, 'create');
   }
 
   addTaskToColumn(columnId: string, taskId: string) {
@@ -138,6 +141,12 @@ export class ColumnService {
       currentState: { columns, tasks },
     } = this.#stateService;
 
+    const { currentEditingId } = this.#editService;
+
+    if (columnId === currentEditingId) {
+      this.#editService.stopEditing();
+    }
+
     const { [columnId]: deadColumn, ...newColumns } = columns; //или deletedColumn, но я захотел так...
 
     const idsToRemoved = new Set(deadColumn.taskIds);
@@ -150,5 +159,42 @@ export class ColumnService {
       tasks: newTask,
     });
     this.#boardService.removeColumnFromBoard(columnId);
+  }
+
+  isColumnId(id: string) {
+    const columns = this.#getColumns();
+    return Boolean(columns[id]);
+  }
+
+  //EDITING
+
+  readonly editingColumnId$ = this.#editService
+    .getEditingId()
+    .pipe(map((id) => (id === null || this.isColumnId(id) ? id : null)));
+
+  startEdit(id: string) {
+    this.#editService.setEditing(id);
+  }
+
+  cancelEdit() {
+    const currentId = this.#editService.currentEditingId;
+    if (!currentId || !this.isColumnId(currentId)) return;
+    const column = this.#getColumns()[currentId];
+
+    this.#updateColumn(column);
+    this.#editService.stopEditing();
+  }
+
+  saveEdit(updateColumn: Column) {
+    const { currentEditingId } = this.#editService;
+
+    this.#updateColumn(updateColumn);
+    if (updateColumn.id === currentEditingId) {
+      this.#editService.stopEditing();
+    }
+  }
+
+  isEditingColumnId(id: string) {
+    return this.isColumnId(id) && this.#editService.currentEditingId === id;
   }
 }
