@@ -1,20 +1,77 @@
-<mat-card class="task">
-  <mat-card-header>
-    <mat-card-title class="task__title" [class.task__title--done]="isDone">{{
-      task.title
-    }}</mat-card-title>
-    <mat-card-subtitle class="task__description">{{
-      task.description
-    }}</mat-card-subtitle>
+<mat-card class="task" hoverShowHost cdkDrag [cdkDragDisabled]="isEditing">
+  <mat-card-header *ngIf="!isEditing; else editForm">
+    <mat-card-title class="task__title" [class.task__title--done]="isDone"
+      >{{ task.title }}
+      <button
+        mat-icon-button
+        matIconButtonSize
+        size="tiny"
+        [disabled]="isDone"
+        (click)="startEdit()"
+        hoverShowTarget
+      >
+        <mat-icon>edit</mat-icon>
+      </button>
+    </mat-card-title>
   </mat-card-header>
-  <mat-card-actions>
-    <button mat-icon-button (click)="clickToggleStatus()">
+
+  <ng-template #editForm>
+    <div class="task__edit-form">
+      <textarea
+        autofocus
+        matInput
+        [(ngModel)]="editTitle"
+        placeholder="Заголовок"
+        cdkTextareaAutosize
+        #autosize="cdkTextareaAutosize"
+        cdkAutosizeMinRows="1"
+        cdkAutosizeMaxRows="10"
+      ></textarea>
+
+      <mat-card-actions class="task__actions">
+        <button
+          mat-icon-button
+          (click)="saveEdit()"
+          matIconButtonSize
+          size="medium"
+        >
+          <mat-icon>done</mat-icon>
+        </button>
+        <button
+          mat-icon-button
+          (click)="isCreating ? deleteTask() : cancelEdit()"
+          matIconButtonSize
+          size="medium"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </mat-card-actions>
+    </div>
+  </ng-template>
+
+  @if(!isEditing) {
+  <mat-card-actions class="task__actions">
+    <button
+      mat-icon-button
+      hoverShowTarget
+      (click)="clickToggleStatus()"
+      matIconButtonSize
+      size="medium"
+    >
       <mat-icon color="accent">
         {{ isDone ? "refresh" : "done" }}
       </mat-icon>
     </button>
-    <button mat-icon-button [disabled]="!isDone" (click)="clickDelete()">
+    <button
+      mat-icon-button
+      hoverShowTarget
+      [disabled]="!isDone"
+      (click)="deleteTask()"
+      matIconButtonSize
+      size="medium"
+    >
       <mat-icon>close</mat-icon>
     </button>
   </mat-card-actions>
+  }
 </mat-card>

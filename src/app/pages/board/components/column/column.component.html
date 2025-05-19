@@ -1,40 +1,95 @@
-<div class="column__header" cdkDragHandle>
-  <h3>{{ column.title }}</h3>
-  <button
-    mat-icon-button
-    (click)="onOpenTaskDialog.emit(column.id)"
-    matTooltip="Добавить задачу"
-  >
-    <mat-icon>add</mat-icon>
-  </button>
-  <button mat-icon-button (click)="clickDelete()" matTooltip="Удалить колонку">
-    <mat-icon>close</mat-icon>
-  </button>
-</div>
-<div
-  [id]="column.id"
-  cdkDropList
-  [cdkDropListData]="taskIds()"
-  (cdkDropListDropped)="dropTask($event)"
-  class="task-list"
-  [class.task-list--no-items]="!hasTasks()"
->
-  <ng-container *ngIf="hasTasks(); else noTasksBlock">
-    <app-task
-      class="task-list__task"
-      cdkDrag
-      *ngFor="let task of tasks$ | async"
-      [task]="task"
-      [columnId]="column.id"
-    ></app-task>
-  </ng-container>
-</div>
+<div class="column" cdkDrag [cdkDragDisabled]="isEditing">
+  <div class="column__header" cdkDragHandle hoverShowHost>
+    @if (!isEditing) {
+    <div class="column__header__title">
+      {{ column.title }}
+    </div>
 
-<ng-template #noTasksBlock>
-  <div class="no-tasks">
-    <span>Здесь нет задач, но можно их добавить...</span>
-    <button mat-mini-fab (click)="onOpenTaskDialog.emit(column.id)">
+    <button
+      mat-icon-button
+      (click)="clickAddTask()"
+      [disabled]="isCreating"
+      matTooltip="Добавить задачу"
+    >
       <mat-icon>add</mat-icon>
     </button>
+    <button
+      mat-icon-button
+      matTooltip="Редактировать"
+      (click)="startEdit()"
+      hoverShowTarget
+    >
+      <mat-icon>edit</mat-icon>
+    </button>
+    <button
+      mat-icon-button
+      (click)="deleteColumn()"
+      matTooltip="Удалить колонку"
+      hoverShowTarget
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+    } @else {
+    <div class="column__edit-form">
+      <textarea
+        autofocus
+        matInput
+        [formControl]="editTitle"
+        placeholder="Заголовок"
+        cdkTextareaAutosize
+        #autosize="cdkTextareaAutosize"
+        cdkAutosizeMinRows="1"
+        cdkAutosizeMaxRows="10"
+      ></textarea>
+
+      <div class="column__edit-form__error">
+        @if (editTitle.invalid && editTitle.touched) { @if
+        (editTitle.hasError('requiredTrim')) {
+        <div>Требуется заголовок</div>
+        } @else if (editTitle.hasError('maxlength')) {
+        <div>Максимум 64 символа</div>
+        } }
+      </div>
+      <button
+        mat-icon-button
+        (click)="saveEdit()"
+        [disabled]="editTitle.invalid"
+        matTooltip="Сохранить"
+        matIconButtonSize
+        size="medium"
+      >
+        <mat-icon>done</mat-icon>
+      </button>
+      <button
+        mat-icon-button
+        (click)="isCreating ? deleteColumn() : cancelEdit()"
+        matTooltip="Отмена"
+        matIconButtonSize
+        size="medium"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    }
   </div>
-</ng-template>
+
+  <div
+    [id]="column.id"
+    cdkDropList
+    [cdkDropListData]="(taskIds$ | async)!"
+    (cdkDropListDropped)="dropTask($event)"
+    class="column__task-list"
+    [class.column__task-list--no-items]="!(hasTasks$ | async)"
+  >
+    @for (task of tasks$ | async; track task.id) {
+    <app-task [task]="task" [columnId]="column.id"></app-task>
+    } @empty {
+    <div class="no-tasks">
+      <span>Здесь нет задач, но можно их добавить...</span>
+      <button mat-mini-fab (click)="clickAddTask()">
+        <mat-icon>add</mat-icon>
+      </button>
+    </div>
+    }
+  </div>
+</div>

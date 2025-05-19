@@ -1,6 +1,7 @@
 @use "@angular/material" as mat;
 @use "../theme-colors" as theme-colors;
 @import "./app/core/shared/styles/space-var";
+@import "./app/core/shared/styles/drag-drop";
 
 @include mat.core();
 

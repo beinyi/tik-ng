@@ -1,9 +1,10 @@
-import { computed, inject, Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { StateService } from './state.service';
 import { BoardService } from './board.service';
 import { combineLatestWith, map } from 'rxjs';
-import { Column } from '../../../models/index.model';
+import { Column } from '@models/index.model';
 import { moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
+import { EditService } from './common/edit.service';
 
 @Injectable({
   providedIn: 'root',
@@ -11,6 +12,7 @@ import { moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 export class ColumnService {
   #stateService = inject(StateService);
   #boardService = inject(BoardService);
+  #editService = inject(EditService);
 
   selectedBoard$ = this.#boardService.selectedBoard$;
 
@@ -28,14 +30,11 @@ export class ColumnService {
     })
   );
 
-  readonly getTasksIdForColumn = (columnId: string) =>
-    computed(() => {
-      if (!columnId) return [];
-      const {
-        currentState: { columns },
-      } = this.#stateService;
-      return columns[columnId]?.taskIds ?? [];
-    });
+  public getTasksIdForColumn$(columnId: string) {
+    return this.#state.pipe(
+      map((state) => state.columns[columnId]?.taskIds ?? [])
+    );
+  }
 
   public getTasksForColumn$(columnId: string) {
     return this.#state.pipe(
@@ -47,37 +46,39 @@ export class ColumnService {
     );
   }
 
-  createColumn(title: string) {
+  #getColumns() {
+    const { columns } = this.#stateService.currentState;
+    return columns;
+  }
+
+  #updateColumn(column: Column) {
+    this.#stateService.updateColumn(column);
+  }
+
+  createColumn() {
     const id = crypto.randomUUID();
     const newColumn: Column = {
       id,
-      title,
+      title: '',
       taskIds: [],
     };
 
-    this.#stateService.updateColumn(newColumn);
+    this.#updateColumn(newColumn);
     this.#boardService.addColumnToBoard(id);
+    this.#editService.setEditing(id, 'create');
   }
 
   addTaskToColumn(columnId: string, taskId: string) {
-    const {
-      currentState: { columns },
-    } = this.#stateService;
-
-    const column = columns[columnId];
+    const column = this.#getColumns()[columnId];
     const updateColumn: Column = {
       ...column,
       taskIds: [...column.taskIds, taskId],
     };
-    this.#stateService.updateColumn(updateColumn);
+    this.#updateColumn(updateColumn);
   }
 
   moveTask(columnId: string, prevIndex: number, currIndex: number) {
-    const {
-      currentState: { columns },
-    } = this.#stateService;
-
-    const column = columns[columnId];
+    const column = this.#getColumns()[columnId];
     const updateColumn: Column = {
       ...column,
       taskIds: [...column.taskIds],
@@ -85,7 +86,7 @@ export class ColumnService {
 
     moveItemInArray(updateColumn.taskIds, prevIndex, currIndex);
 
-    this.#stateService.updateColumn(updateColumn);
+    this.#updateColumn(updateColumn);
   }
 
   transferTask(
@@ -99,9 +100,7 @@ export class ColumnService {
       return;
     }
 
-    const {
-      currentState: { columns },
-    } = this.#stateService;
+    const columns = this.#getColumns();
 
     const prevColumn = columns[prevColumnId];
     const currColumn = columns[currColumnId];
@@ -128,23 +127,25 @@ export class ColumnService {
   }
 
   removeTaskFromColumn(columnId: string, taskId: string) {
-    const {
-      currentState: { columns },
-    } = this.#stateService;
-
-    const column = columns[columnId];
+    const column = this.#getColumns()[columnId];
     const updatedColumn: Column = {
       ...column,
       taskIds: column.taskIds.filter((id) => id !== taskId),
     };
 
-    this.#stateService.updateColumn(updatedColumn);
+    this.#updateColumn(updatedColumn);
   }
 
   deleteColumn(columnId: string) {
     const {
       currentState: { columns, tasks },
     } = this.#stateService;
+
+    const { currentEditingId } = this.#editService;
+
+    if (columnId === currentEditingId) {
+      this.#editService.stopEditing();
+    }
 
     const { [columnId]: deadColumn, ...newColumns } = columns; //или deletedColumn, но я захотел так...
 
@@ -158,5 +159,42 @@ export class ColumnService {
       tasks: newTask,
     });
     this.#boardService.removeColumnFromBoard(columnId);
+  }
+
+  isColumnId(id: string) {
+    const columns = this.#getColumns();
+    return Boolean(columns[id]);
+  }
+
+  //EDITING
+
+  readonly editingColumnId$ = this.#editService
+    .getEditingId()
+    .pipe(map((id) => (id === null || this.isColumnId(id) ? id : null)));
+
+  startEdit(id: string) {
+    this.#editService.setEditing(id);
+  }
+
+  cancelEdit() {
+    const currentId = this.#editService.currentEditingId;
+    if (!currentId || !this.isColumnId(currentId)) return;
+    const column = this.#getColumns()[currentId];
+
+    this.#updateColumn(column);
+    this.#editService.stopEditing();
+  }
+
+  saveEdit(updateColumn: Column) {
+    const { currentEditingId } = this.#editService;
+
+    this.#updateColumn(updateColumn);
+    if (updateColumn.id === currentEditingId) {
+      this.#editService.stopEditing();
+    }
+  }
+
+  isEditingColumnId(id: string) {
+    return this.isColumnId(id) && this.#editService.currentEditingId === id;
   }
 }
