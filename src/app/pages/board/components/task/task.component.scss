@@ -1,3 +1,7 @@
+:host {
+  display: contents;
+}
+
 .task {
   -webkit-user-select: none;
   user-select: none;
@@ -11,5 +15,21 @@
   &__description {
     color: var(--mat-sys-outline);
     font: var(--mat-sys-body-medium);
+  }
+
+  &__edit-form {
+    textarea {
+      border: none;
+      outline: none;
+      background-color: initial;
+      resize: none;
+
+      padding-top: 16px;
+      padding-left: 16px;
+      padding-bottom: initial;
+      margin: initial;
+      width: calc(100% - 16px);
+      font: var(--mat-sys-title-medium);
+    }
   }
 }

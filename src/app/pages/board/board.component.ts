@@ -1,4 +1,4 @@
-import { Component, inject, model } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import {
   MatSelectModule,
@@ -11,28 +11,20 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { BoardService } from '../../core/services/board/board.service';
 import { AsyncPipe, CommonModule } from '@angular/common';
-import {
-  FormControl,
-  FormsModule,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { createThemeSignal } from '../../core/signals/theme.signal';
 import { MatDialog } from '@angular/material/dialog';
 import { DialogBoardCreateComponent } from './components/board-dialog/dialog-board-create.component';
 import { distinctUntilChanged, filter, map } from 'rxjs';
-import { TaskDialogComponent } from './components/task-dialog/task-dialog.component';
-import { Task } from '../../models/index.model';
 import { ColumnComponent } from './components/column/column.component';
 import {
   CdkDragDrop,
-  CdkDrag,
   CdkDropList,
   CdkDropListGroup,
 } from '@angular/cdk/drag-drop';
 import { DragScrollDirective } from '../../core/shared/directives/drag-scroll.directive';
 import { ColumnService } from '../../core/services/board/column.service';
-import { TaskService } from '../../core/services/board/task.service';
+import { EditService } from '@app/core/services/board/common/edit.service';
 
 @Component({
   selector: 'app-board',
@@ -50,7 +42,6 @@ import { TaskService } from '../../core/services/board/task.service';
     ReactiveFormsModule,
     AsyncPipe,
     ColumnComponent,
-    CdkDrag,
     CdkDropList,
     CdkDropListGroup,
     DragScrollDirective,
@@ -61,10 +52,11 @@ import { TaskService } from '../../core/services/board/task.service';
 export class BoardComponent {
   #boardService = inject(BoardService);
   #columnService = inject(ColumnService);
-  #taskService = inject(TaskService);
+  #editService = inject(EditService);
   #themeSignal = createThemeSignal();
 
   isDarkTheme = this.#themeSignal.isDarkTheme;
+  isCreating = false;
 
   board$ = this.#boardService.selectedBoard$;
   boards$ = this.#boardService.boards$;
@@ -74,11 +66,6 @@ export class BoardComponent {
   selectedBoardId = new FormControl();
 
   readonly dialog = inject(MatDialog);
-  newColumnName = new FormControl('', [
-    Validators.required,
-    Validators.minLength(3),
-    Validators.maxLength(30),
-  ]);
 
   dropColumn(event: CdkDragDrop<string[]>) {
     this.#boardService.moveColumn(
@@ -98,22 +85,8 @@ export class BoardComponent {
     });
   }
 
-  openTaskDialog(columnId: string): void {
-    const dialogRef = this.dialog.open(TaskDialogComponent);
-
-    dialogRef.afterClosed().subscribe((result: Omit<Task, 'id'>) => {
-      if (result !== undefined) {
-        this.#taskService.createTask(columnId, result);
-      }
-    });
-  }
-
   addColumn() {
-    if (this.newColumnName.valid) {
-      this.#columnService.createColumn(this.newColumnName.value!);
-      this.newColumnName.setValue('');
-      this.newColumnName.setErrors(null);
-    }
+    this.#columnService.createColumn();
   }
 
   onChangeTheme() {
@@ -134,5 +107,9 @@ export class BoardComponent {
       .subscribe((id) => {
         this.selectedBoardId.setValue(id, { emitEvent: false });
       });
+
+    this.#editService.isCreating$.subscribe((isCreating) => {
+      this.isCreating = isCreating;
+    });
   }
 }

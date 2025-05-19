@@ -19,30 +19,15 @@
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field>
-        <mat-label>Новая колонка</mat-label>
-        <input
-          aria-label="Новая колонка"
-          matInput
-          [formControl]="newColumnName"
-          cdkFocusInitial
-        />
-        <mat-error *ngIf="newColumnName.hasError('maxlength')"
-          >Макс. 30 символов</mat-error
-        >
-        <mat-error *ngIf="newColumnName.hasError('minlength')"
-          >Мин. 3 символа</mat-error
-        >
-        <button
-          matSuffix
-          mat-icon-button
-          (click)="addColumn()"
-          title="Добавить колонку"
-          [disabled]="newColumnName.invalid"
-        >
-          <mat-icon>add</mat-icon>
-        </button>
-      </mat-form-field>
+      <button
+        matSuffix
+        mat-icon-button
+        [disabled]="isCreating"
+        (click)="addColumn()"
+        title="Добавить колонку"
+      >
+        <mat-icon>add</mat-icon>
+      </button>
     </div>
     <button mat-button (click)="onChangeTheme()">Тема</button>
   </nav>
@@ -57,7 +42,8 @@
     (cdkDropListDropped)="dropColumn($event)"
   >
     @for (column of columns$ | async; track column.id) {
-    <app-column cdkDrag class="column_item" [column]="column"></app-column>
+
+    <app-column class="column_item" [column]="column"></app-column>
     }
   </div>
 </div>
