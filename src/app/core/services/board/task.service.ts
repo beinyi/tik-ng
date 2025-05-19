@@ -10,22 +10,37 @@ export class TaskService {
   #stateService = inject(StateService);
   #columnService = inject(ColumnService);
 
-  createTask(columnId: string, task: Omit<Task, 'id' | 'status'>) {
+  createTask(columnId: string) {
     const id = crypto.randomUUID();
     const newTask: Task = {
       id,
       status: 'new',
-      ...task,
+      title: '',
+      description: '',
     };
 
     this.#stateService.updateTask(newTask);
     this.#columnService.addTaskToColumn(columnId, id);
   }
 
-  toggleTaskStatus(id: string) {
+  #updateTask(task: Task) {
+    this.#stateService.updateTask(task);
+  }
+
+  isTaskId(id: string) {
+    const tasks = this.#getTasks();
+    return Boolean(tasks[id]);
+  }
+
+  #getTasks() {
     const {
       currentState: { tasks },
     } = this.#stateService;
+    return tasks;
+  }
+
+  toggleTaskStatus(id: string) {
+    const tasks = this.#getTasks();
     const task = tasks[id];
     if (!task) return console.warn(`Не найдена таска ${id}`);
 
@@ -37,9 +52,7 @@ export class TaskService {
   }
 
   deleteTask(taskId: string, columnId: string) {
-    const {
-      currentState: { tasks: prevTasks },
-    } = this.#stateService;
+    const prevTasks = this.#getTasks();
     const { [taskId]: _, ...tasks } = prevTasks;
 
     this.#stateService.updateState(tasks);

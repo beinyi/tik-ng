@@ -44,37 +44,38 @@ export class ColumnService {
     );
   }
 
-  createColumn(title: string) {
+  #getColumns() {
+    const { columns } = this.#stateService.currentState;
+    return columns;
+  }
+
+  #updateColumn(column: Column) {
+    this.#stateService.updateColumn(column);
+  }
+
+  createColumn() {
     const id = crypto.randomUUID();
     const newColumn: Column = {
       id,
-      title,
+      title: '',
       taskIds: [],
     };
 
-    this.#stateService.updateColumn(newColumn);
+    this.#updateColumn(newColumn);
     this.#boardService.addColumnToBoard(id);
   }
 
   addTaskToColumn(columnId: string, taskId: string) {
-    const {
-      currentState: { columns },
-    } = this.#stateService;
-
-    const column = columns[columnId];
+    const column = this.#getColumns()[columnId];
     const updateColumn: Column = {
       ...column,
       taskIds: [...column.taskIds, taskId],
     };
-    this.#stateService.updateColumn(updateColumn);
+    this.#updateColumn(updateColumn);
   }
 
   moveTask(columnId: string, prevIndex: number, currIndex: number) {
-    const {
-      currentState: { columns },
-    } = this.#stateService;
-
-    const column = columns[columnId];
+    const column = this.#getColumns()[columnId];
     const updateColumn: Column = {
       ...column,
       taskIds: [...column.taskIds],
@@ -82,7 +83,7 @@ export class ColumnService {
 
     moveItemInArray(updateColumn.taskIds, prevIndex, currIndex);
 
-    this.#stateService.updateColumn(updateColumn);
+    this.#updateColumn(updateColumn);
   }
 
   transferTask(
@@ -96,9 +97,7 @@ export class ColumnService {
       return;
     }
 
-    const {
-      currentState: { columns },
-    } = this.#stateService;
+    const columns = this.#getColumns();
 
     const prevColumn = columns[prevColumnId];
     const currColumn = columns[currColumnId];
@@ -125,17 +124,13 @@ export class ColumnService {
   }
 
   removeTaskFromColumn(columnId: string, taskId: string) {
-    const {
-      currentState: { columns },
-    } = this.#stateService;
-
-    const column = columns[columnId];
+    const column = this.#getColumns()[columnId];
     const updatedColumn: Column = {
       ...column,
       taskIds: column.taskIds.filter((id) => id !== taskId),
     };
 
-    this.#stateService.updateColumn(updatedColumn);
+    this.#updateColumn(updatedColumn);
   }
 
   deleteColumn(columnId: string) {
