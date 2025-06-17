@@ -1,9 +1,11 @@
 import { inject, Injectable } from '@angular/core';
-import { Board } from '../../../models/index.model';
-import { BehaviorSubject, map } from 'rxjs';
+import { Board } from '@models/index.model';
+import { BehaviorSubject, filter, map, take } from 'rxjs';
 import { demoBoardId } from './state.mock';
 import { StateService } from './state.service';
 import { moveItemInArray } from '@angular/cdk/drag-drop';
+
+const SELECTED_BOARD_KEY = 'selectedBoardId';
 
 @Injectable({
   providedIn: 'root',
@@ -11,13 +13,33 @@ import { moveItemInArray } from '@angular/cdk/drag-drop';
 export class BoardService {
   #stateService = inject(StateService);
 
-  #state = this.#stateService.state;
-  #selectedBord = new BehaviorSubject<string>(demoBoardId);
+  #state = this.#stateService.state$;
+  #selectedBoard = new BehaviorSubject<string>(demoBoardId);
+  constructor() {
+    this.#stateService.isReady$
+      .pipe(filter(Boolean), take(1))
+      .subscribe(() => this.#initSelectedBoard());
+  }
+
+  #initSelectedBoard() {
+    const savedId = localStorage.getItem(SELECTED_BOARD_KEY);
+    const boards = this.#stateService.currentState.boards;
+    console.log(savedId);
+
+    if (savedId && boards[savedId]) {
+      this.#selectedBoard.next(savedId);
+    } else {
+      const firstBoardId = Object.keys(boards)[0];
+      if (firstBoardId) {
+        this.selectBoard(firstBoardId);
+      }
+    }
+  }
 
   public boards$ = this.#state.pipe(
     map((state) => Object.values(state.boards))
   );
-  public selectedBoard$ = this.#selectedBord.pipe(
+  public selectedBoard$ = this.#selectedBoard.pipe(
     map((id) => (id ? this.#stateService.currentState.boards[id] : null))
   );
 
@@ -26,16 +48,16 @@ export class BoardService {
   );
 
   get selectedBoardId() {
-    return this.#selectedBord.value;
+    return this.#selectedBoard.value;
   }
   get selectedBoard() {
-    if (!this.selectedBoardId) return null;
-    const { boards } = this.#stateService.currentState;
-    return boards[this.selectedBoardId];
+    const id = this.#selectedBoard.value;
+    return id ? this.#stateService.currentState.boards[id] : null;
   }
 
   selectBoard(id: string) {
-    this.#selectedBord.next(id);
+    this.#selectedBoard.next(id);
+    localStorage.setItem(SELECTED_BOARD_KEY, id);
   }
 
   createBoard(title: string) {
