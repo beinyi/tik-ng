@@ -16,7 +16,7 @@ export class ColumnService {
 
   selectedBoard$ = this.#boardService.selectedBoard$;
 
-  #state = this.#stateService.state;
+  #state = this.#stateService.state$;
 
   public columns$ = this.#state.pipe(
     combineLatestWith(this.selectedBoard$),
@@ -111,19 +111,17 @@ export class ColumnService {
 
     transferArrayItem(prevTasks, currTasks, prevIndex, currIndex);
 
-    this.#stateService.updateState({
-      columns: {
-        ...columns,
-        [prevColumnId]: {
-          ...prevColumn,
-          taskIds: prevTasks,
-        },
-        [currColumnId]: {
-          ...currColumn,
-          taskIds: currTasks,
-        },
-      },
-    });
+    const prevUpdateColumn = {
+      ...prevColumn,
+      taskIds: prevTasks,
+    };
+    const currUpdateColumn = {
+      ...currColumn,
+      taskIds: currTasks,
+    };
+
+    this.#stateService.updateColumn(prevUpdateColumn);
+    this.#stateService.updateColumn(currUpdateColumn);
   }
 
   removeTaskFromColumn(columnId: string, taskId: string) {
@@ -137,27 +135,13 @@ export class ColumnService {
   }
 
   deleteColumn(columnId: string) {
-    const {
-      currentState: { columns, tasks },
-    } = this.#stateService;
-
     const { currentEditingId } = this.#editService;
 
     if (columnId === currentEditingId) {
       this.#editService.stopEditing();
     }
 
-    const { [columnId]: deadColumn, ...newColumns } = columns; //или deletedColumn, но я захотел так...
-
-    const idsToRemoved = new Set(deadColumn.taskIds);
-    const newTask = Object.fromEntries(
-      Object.entries(tasks).filter(([id]) => !idsToRemoved.has(id))
-    );
-
-    this.#stateService.updateState({
-      columns: newColumns,
-      tasks: newTask,
-    });
+    this.#stateService.deleteColumn(columnId);
     this.#boardService.removeColumnFromBoard(columnId);
   }
 

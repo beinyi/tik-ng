@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { StateService } from './state.service';
 import { ColumnService } from './column.service';
-import { Task } from '../../../models/index.model';
+import { Task } from '@models/index.model';
 import { EditService } from './common/edit.service';
 import { map } from 'rxjs';
 
@@ -64,7 +64,7 @@ export class TaskService {
       this.#editService.stopEditing();
     }
 
-    this.#stateService.updateState(tasks);
+    this.#stateService.deleteTask(taskId);
     this.#columnService.removeTaskFromColumn(columnId, taskId);
   }
 
